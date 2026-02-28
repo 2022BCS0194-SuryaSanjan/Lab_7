@@ -1,0 +1,114 @@
+name: CI-CD ML Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  train:
+    name: Train ML Model
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run training
+        run: |
+          python scripts/train.py
+
+      - name: Upload trained model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-artifacts
+          path: |
+            model.pkl
+            metrics.json
+
+  deploy:
+    name: Deploy ML Model
+    needs: train
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download trained model artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: experiment-artifacts
+
+      # 🔍 Read & compare metrics (R2 ↑ and RMSE ↓)
+      - name: Compare model metrics
+        run: |
+          python <<EOF
+          import json, os
+
+          with open("metrics.json") as f:
+              m = json.load(f)
+
+          cur_r2 = m["r2"]
+          cur_rmse = m["rmse"]
+
+          best_r2 = float(os.environ.get("BEST_R2", 0))
+          best_rmse = float(os.environ.get("BEST_MSE", 999999))
+
+          print("Current R2:", cur_r2)
+          print("Best R2:", best_r2)
+          print("Current RMSE:", cur_rmse)
+          print("Best RMSE:", best_rmse)
+
+          if cur_r2 <= best_r2 or cur_rmse >= best_rmse:
+              print("2022BCD0055 ---- Metrics did not improve")
+              exit(0)
+
+          # export values for later steps
+          with open(os.environ["GITHUB_ENV"], "a") as env:
+              env.write(f"NEW_R2={cur_r2}\n")
+              env.write(f"NEW_RMSE={cur_rmse}\n")
+
+          print("Metrics improved. Proceeding with deployment.")
+          EOF
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_TOKEN }}" | docker login \
+            -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/wine-quality:${{ github.run_id }} .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/wine-quality:${{ github.run_id }}
+
+      # 🔄 Update BEST_R2
+      - name: Update BEST_R2 variable
+        run: |
+          curl -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/variables/BEST_R2 \
+            -d "{\"name\":\"BEST_R2\",\"value\":\"${NEW_R2}\"}"
+
+      # 🔄 Update BEST_MSE
+      - name: Update BEST_MSE variable
+        run: |
+          curl -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/variables/BEST_MSE \
+            -d "{\"name\":\"BEST_MSE\",\"value\":\"${NEW_RMSE}\"}"
