@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE = "sanjan2022bcs0194/wine-ml-model:v2"
+        IMAGE = "sanjan2022bcs0194/wine-ml-model:latest"
         CONTAINER = "wine-test"
         // Changed to localhost because we will use --network host
         BASE_URL = "http://localhost:8000"
@@ -31,29 +31,24 @@ pipeline {
         stage('Wait for API') {
             steps {
                 sh '''
-                echo "Starting API health check..."
-                # Use a counter for compatibility across different shells
                 count=1
-                max_attempts=12
-                
-                while [ $count -le $max_attempts ]
+                while [ $count -le 12 ]
                 do
-                  echo "Checking API attempt $count of $max_attempts..."
                   if curl -s -f http://localhost:8000/docs; then
-                    echo "API is up and running!"
+                    echo "API is up!"
                     exit 0
                   fi
-                  echo "API not ready yet, sleeping 5s..."
+                  echo "Attempt $count: API not ready yet..."
                   sleep 5
                   count=$((count + 1))
                 done
-
-                echo "Error: API failed to become ready within 60 seconds."
+        
+                echo "FAILED: Printing logs for wine-test to find the error:"
+                docker logs wine-test
                 exit 1
                 '''
             }
         }
-
         stage('Inference Test') {
             steps {
                 sh '''
