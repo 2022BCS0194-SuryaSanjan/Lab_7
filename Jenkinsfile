@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE = "sanjan2022bcs0194/wine-ml-model:latest"
-        CONTAINER = "wine-api"
+        IMAGE = "sanjan2022bcs0194/wine-ml-model:v2"
+        CONTAINER = "wine-test"
         // Changed to localhost because we will use --network host
         BASE_URL = "http://localhost:8000"
     }
