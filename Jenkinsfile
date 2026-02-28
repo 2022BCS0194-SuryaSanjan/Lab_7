@@ -31,16 +31,24 @@ pipeline {
         stage('Wait for API') {
             steps {
                 sh '''
-                for i in {1..12}
+                echo "Starting API health check..."
+                # Use a counter for compatibility across different shells
+                count=1
+                max_attempts=12
+                
+                while [ $count -le $max_attempts ]
                 do
-                  echo "Checking API attempt $i..."
-                  if curl -s -f $BASE_URL/docs; then
-                    echo "API is up!"
+                  echo "Checking API attempt $count of $max_attempts..."
+                  if curl -s -f http://localhost:8000/docs; then
+                    echo "API is up and running!"
                     exit 0
                   fi
+                  echo "API not ready yet, sleeping 5s..."
                   sleep 5
+                  count=$((count + 1))
                 done
-                echo "API not ready"
+
+                echo "Error: API failed to become ready within 60 seconds."
                 exit 1
                 '''
             }
