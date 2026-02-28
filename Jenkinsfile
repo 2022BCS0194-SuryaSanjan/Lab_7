@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE = "sanjan2022bcs0194/wine-ml-model:v3"
+        IMAGE = "sanjan2022bcs0194/jenkins-lab7:v3"
         CONTAINER = "jenkins_lab7"
         BASE_URL = "http://host.docker.internal:8000"
     }
