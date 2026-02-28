@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         IMAGE = "sanjan2022bcs0194/wine-ml-model:v2"
-        CONTAINER = "ml_infer_test"
+        CONTAINER = "wine-api"
         BASE_URL = "http://host.docker.internal:8000"
     }
 
