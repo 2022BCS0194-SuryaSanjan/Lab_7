@@ -24,7 +24,7 @@ pipeline {
         stage('Run Container') {
             steps {
                 // Added --network host so Jenkins can reach it via localhost:8000
-                sh 'docker run -d --network host --name $CONTAINER $IMAGE'
+                sh 'docker run -d -p 8000:8000 --name $CONTAINER $IMAGE'
             }
         }
 
