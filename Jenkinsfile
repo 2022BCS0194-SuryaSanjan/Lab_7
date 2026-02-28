@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE = "2022bcd0055yeshwanth/2022bcd0055-ml:latest"
+        IMAGE = "sanjan2022bcs0194/wine-ml-model:v2"
         CONTAINER = "ml_infer_test"
         BASE_URL = "http://host.docker.internal:8000"
     }
