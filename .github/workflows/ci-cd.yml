@@ -71,7 +71,7 @@ jobs:
           print("Best RMSE:", best_rmse)
 
           if cur_r2 <= best_r2 or cur_rmse >= best_rmse:
-              print("2022BCD0055 ---- Metrics did not improve")
+              print("2022BCS0194 ---- Metrics did not improve")
               exit(0)
 
           # export values for later steps
