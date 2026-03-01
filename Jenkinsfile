@@ -47,7 +47,7 @@ pipeline {
             steps {
                 sh '''
                 # Converting JSON to Query Parameters for the GET request
-                QUERY=$(jq -r 'to_entries|map("\\(.key)=\\(.value)")|join("&")' valid_input.json)
+                QUERY=$(jq -r 'to_entries|map("\\(.key)=\\(.value)")|join("&")' invalid.json)
                 echo "Sending Request to: $BASE_URL/predict?$QUERY"
                 
                 curl -s "$BASE_URL/predict?$QUERY" > output.json
