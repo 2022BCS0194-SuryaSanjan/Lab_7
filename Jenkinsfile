@@ -23,8 +23,7 @@ pipeline {
 
         stage('Run Container') {
             steps {
-                // Using explicit port mapping (-p) to bridge the host and container
-                sh 'docker run -d -p 8000:8000 --name $CONTAINER $IMAGE'
+                sh 'docker run -d --network host --name $CONTAINER $IMAGE'
             }
         }
 
